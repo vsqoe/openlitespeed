@@ -237,7 +237,7 @@ preparelibquic()
         if [ $? -eq 0 ] ; then
             echo Need to git download the submodule ...
             rm -rf lsquic
-            git clone https://github.com/litespeedtech/lsquic.git
+            git clone https://github.com/vsqoe/lsquic.git
             cd lsquic
             
             LIBQUICVER=`cat ../LSQUICCOMMIT`

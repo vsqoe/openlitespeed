@@ -801,6 +801,7 @@ void QuicEngine::setDebugLog(int is_enable)
     }
     else
         lsquic_set_log_level("warn");
+    lsquic_logger_lopt("headers=debug,cubic=debug");
 }
 
 
