@@ -16,8 +16,8 @@ SET(lsr_STAT_SRCS
    ls_lfqueue.c
    ls_lfstack.c
    ls_link.c
-   ls_llmq.c
-   ls_llxq.c
+   ######################ls_llmq.c
+   ######################ls_llxq.c
    ls_lock.c
    ls_loopbuf.c
    ls_map.c
