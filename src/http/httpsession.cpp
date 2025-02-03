@@ -96,6 +96,11 @@
 #define SERVERPUSHTAG           "ls_smartpush"
 #define SERVERPUSHTAGLENGTH     (sizeof(SERVERPUSHTAG) - 1)
 
+// VSQoE starts
+#include <string.h>
+#include <vsqoe_shared_module.h>
+shared_struct *shared_value = NULL;
+// VSQoE ends
 
 static const char * s_stateName[HSPS_END] =
 {
@@ -1410,14 +1415,52 @@ int HttpSession::hookResumeCallback(lsi_session_t *session, long lParam,
     return ((HttpSession *)pSession)->resumeProcess(0, 0);
 }
 
+int parse_fallback_header(const char *str, int len) {
+    const char *key = "fallback:";
+    int key_len = strlen(key);
+    for (int i = 0; i <= len - key_len; i++) {
+        if (strncmp(&str[i], key, key_len) == 0) {
+            i += key_len;
+            // Skip spaces
+            while (i < len && isspace((unsigned char)str[i])) {
+                i++;
+            }
+            if (i+4 <= len && strncmp(&str[i], "true", 4) == 0) {
+                return 1;
+            } else if (i+5 <= len && strncmp(&str[i], "false", 5) == 0) {
+                return 0;
+            }
+        }
+    }
+    // Header not present
+    return -1;
+}
 
 int HttpSession::processNewReqInit()
 {
     int ret;
 
-    if ( m_request.getHttpHeaderLen() > 0 )
-        LS_DBG_H(getLogSession(), "Headers: %.*s",
-                m_request.getHttpHeaderLen(), m_request.getOrgReqLine() );
+    if ( m_request.getHttpHeaderLen() > 0 ) {
+        if (!shared_value) {
+			shared_value = shared_value_init("/tmp/shared_cwnd");
+        }
+        uint64_t cwnd = shared_value_read(shared_value);
+		int fallback = parse_fallback_header(m_request.getOrgReqLine(), m_request.getHttpHeaderLen());
+        LS_DBG_H(getLogSession(), "VSQoE: fallback: %d, cwnd: %lu", fallback, cwnd);
+		if (fallback != 1) {
+			goto NoFallbackHeader;
+		}
+
+	    char command[256];
+        snprintf(command, sizeof(command), "sudo /home/lakshay21060/server/cwndebpf/bpftool/src/bpftool "
+				 "map update name CwndMap key hex 00 00 00 00 value hex %02lX %02lX %02lX %02lX",
+                 cwnd & 0xFF, (cwnd >> 8) & 0xFF, (cwnd >> 16) & 0xFF, (cwnd >> 24) & 0xFF);
+        system(command);
+
+NoFallbackHeader:
+		LS_DBG_H(getLogSession(), "Headers: %.*s",
+				 m_request.getHttpHeaderLen(), m_request.getOrgReqLine() );
+	}
 
     HttpServerConfig &httpServConf = HttpServerConfig::getInstance();
     int useProxyHeader = httpServConf.getUseProxyHeader();
