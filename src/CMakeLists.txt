@@ -119,7 +119,7 @@ SET(unittest_STAT_SRCS
 )
 
 add_executable(openlitespeed ${openlitespeed_SRCS}
-    ${unittest_STAT_SRCS}
+    
 )
 
 add_executable(ls_shmstat
@@ -144,7 +144,7 @@ endif()
 if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "FreeBSD")
   set(STDCXX libc++.a)
 else()
-  set(STDCXX libstdc++.a)
+  set(STDCXX )
 endif()
    
 # NOTE: When creating a new directory, the order it is placed in this list
@@ -161,7 +161,7 @@ SET( litespeedlib
     edio libssl.a libcrypto.a ${BSSL_ADD_LIB} ${libUnitTest}
     libz.a libpcre.a libexpat.a libxml2.a
     ${IP2LOC_ADD_LIB} ${BROTLI_ADD_LIB} udns ${LINUX_AIO_LIB} 
-    -nodefaultlibs pthread rt ${LIBSAN} ${LIBATOMIC} 
+    pthread rt ${LIBSAN} ${LIBATOMIC} 
     ${CMAKE_DL_LIBS} ${STDCXX} crypt bcrypt m gcc_eh c c_nonshared gcc
 )
 
